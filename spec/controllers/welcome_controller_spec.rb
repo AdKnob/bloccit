@@ -22,5 +22,5 @@ require 'rails_helper'
        expect(response).to render_template("faq")
      end
    end
-   
+
  end
