@@ -1,10 +1,12 @@
 class PostsController < ApplicationController
 
   before_action :require_sign_in, except: :show
-  before_action :authorize_user, except: [:show, :new, :create]
+  before_action :set_post, except: [:new, :create]
+  #before_action :authorize_user, except: [:show, :new, :create]
+  before_action :authorize_create, only: [:new, :create, :edit, :update]
+  before_action :authorize_destroy, only: [:destroy]
 
   def show
-    @post = Post.find(params[:id])
   end
 
 
@@ -30,12 +32,10 @@ class PostsController < ApplicationController
 
 
   def edit
-    @post = Post.find(params[:id])
   end
 
 
   def update
-    @post = Post.find(params[:id])
     @post.assign_attributes(post_params)
 
      if @post.save
@@ -49,8 +49,6 @@ class PostsController < ApplicationController
 
 
   def destroy
-     @post = Post.find(params[:id])
-
      if @post.destroy
        flash[:notice] = "\"#{@post.title}\" was deleted successfully."
        redirect_to @post.topic
@@ -65,11 +63,29 @@ class PostsController < ApplicationController
        params.require(:post).permit(:title, :body)
      end
 
-     def authorize_user
-        post = Post.find(params[:id])
-        unless current_user == post.user || current_user.admin?
-          flash[:alert] = "You must be an admin to do that."
-          redirect_to [post.topic, post]
+     def set_post
+       @post = Post.find(params[:id])
+     end
+
+    #  def authorize_user
+    #     post = Post.find(params[:id])
+    #     unless current_user == post.user || current_user.admin?
+    #       flash[:alert] = "You must be an admin to do that."
+    #       redirect_to [post.topic, post]
+    #     end
+    #   end
+
+      def authorize_create
+        unless current_user == @post.user || current_user.admin? || current_user.moderator?
+          flash[:alert] = "You are not authorized to do that."
+          redirect_to [@post.topic, @post]
+        end
+      end
+
+      def authorize_destroy
+        unless current_user == @post.user || current_user.admin?
+          flash[:alert] = "You are not authorized to do that."
+          redirect_to [@post.topic, @post]
         end
       end
 
